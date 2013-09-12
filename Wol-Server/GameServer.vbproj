@@ -72,6 +72,8 @@
     <Compile Include="Common\Account\AccProvider.vb" />
     <Compile Include="Common\Version\Versioncheck.vb" />
     <Compile Include="Common\Libaries\XMLDatei.vb" />
+    <Compile Include="RCON\RCONClient.vb" />
+    <Compile Include="RCON\Server.vb" />
     <Compile Include="WOL\chanprovider.vb" />
     <Compile Include="WOL\Chatchannel.vb" />
     <Compile Include="Common\Libaries\INIDatei.vb" />

@@ -433,11 +433,8 @@ Public Class WolServer
     End Sub
 
     Private Sub WolServer_handle_ADVERTR_command(chan As String, socket As WolClient) Handles Me.handle_ADVERTR_command
-<<<<<<< HEAD
         putCommand(socket, "ADVERTR", "5 " & chan & "\n\r")
-=======
         socket.Send(":" & Getnetwork_adress & " ADVERTR 5 " & chan)
->>>>>>> Added basic WCHAT (WOL V1)-Support
     End Sub
 
     Private Sub WolServer_handle_apgar_command(APGAR As String, _unkint As String, socket As WolClient) Handles Me.handle_apgar_command

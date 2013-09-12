@@ -4,10 +4,17 @@
     Dim WithEvents WOL As New ClassLibrary1.wol_main
     Sub Main()
         WOL.INIT()
+        Dim _tmp As String = ""
 
-        While Console.ReadLine <> "!exit"
+xxx:    'primitiver Code um die Console offen zuhalten... 
+        _tmp = Console.ReadLine
+
+        If _tmp = "!exit" Then
             Exit Sub
-        End While
+        Else
+            GoTo xxx
+        End If
+
     End Sub
 
     Private Sub WOL_Report_debug(message As String) Handles WOL.Report_debug

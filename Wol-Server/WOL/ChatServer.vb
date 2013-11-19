@@ -9,7 +9,7 @@ Public Class WolServer
     Dim chanprovider As New chanprovider
     Private ReadOnly rplcodes As New REPLYCODES
 
-    Private Gamenumber As Integer = 1
+    Private Gamenumber As Integer = 0
     Dim ini_func As INIDatei
     Private _Listener As TcpListener
     Private lock As New Object
@@ -31,7 +31,9 @@ Public Class WolServer
 
     Protected _srvname As String
     Protected _irc_network_fqdn As String
-    Protected _motdfile As String
+    Friend _motdfile As String
+    Friend _timezone As String
+    Friend _multiserver As String = "0"
 
 #Region "Allgemeine Events und Handler-Events"
     Public Event handle_verchk_command(ByVal sku As String, ByVal version As String, ByVal socket As WolClient)
@@ -72,22 +74,6 @@ Public Class WolServer
     Public Event StringDatareceived(ByVal Message As String)
 #End Region
 
-    Public WriteOnly Property set_MOTD_File As String
-        Set(value As String)
-            _motdfile = value
-        End Set
-    End Property
-
-    Private ReadOnly Property get_MOTD_File As String
-        Get
-            If File.Exists(_motdfile) Then
-                Return _motdfile
-            Else
-                Return Nothing
-            End If
-        End Get
-    End Property
-
     Public ReadOnly Property Num_Clients As String
         Get
             Return CStr(ConnectedClients.Count)
@@ -99,19 +85,26 @@ Public Class WolServer
         Return t(0)
     End Function
 
-    Public ReadOnly Property ServerName As String
+    Public Property ServerName As String
         Get
             Return _srvname
         End Get
+        Set(value As String)
+            _srvname = value
+        End Set
     End Property
 
-    Public ReadOnly Property Getnetwork_adress As String
+    Public Property network_adress As String
         Get
             Return _irc_network_fqdn
         End Get
+
+        Set(value As String)
+            _irc_network_fqdn = value
+        End Set
     End Property
 
-    Public Sub StartServer(ByVal port As Integer, ByVal srvname As String, ByVal irc_network As String)
+    Public Sub StartServer(ByVal port As Integer)
         chanprovider.AddChannels(0)
         chanprovider.AddChannels(1)
         chanprovider.AddChannels(2)
@@ -128,18 +121,17 @@ Public Class WolServer
         chanprovider.AddChannels(37)
         chanprovider.AddChannels(41)
 
-        loadServers("605")
-        loadServers("608")
-        loadServers("609")
-        loadServers("611")
-        loadServers("612")
-        loadServers("613")
-        loadServers("615")
+        If _multiserver = "1" Then
+            loadServers("605")
+            loadServers("608")
+            loadServers("609")
+            loadServers("611")
+            loadServers("612")
+            loadServers("613")
+            loadServers("615")
+        End If
 
         Try
-            _srvname = srvname
-            _irc_network_fqdn = irc_network
-        
             _Listener = New TcpListener(IPAddress.Any, port)
             _Listener.ExclusiveAddressUse = False
             _Listener.Start()
@@ -153,14 +145,12 @@ Public Class WolServer
 
     Private Sub _EndAccept(ar As IAsyncResult)
         Dim c As New WolClient(_Listener.EndAcceptTcpClient(ar))
+
         With c
-
-
             AddHandler c.String_MessageReceived, AddressOf Client_String_Messagereceived
             AddHandler c.ConnectionClosed, AddressOf Client_Connection_Closed
             AddHandler c.ClientState, AddressOf Client_Message_Send
             AddHandler c.GetException, AddressOf Client_Exception
-
         End With
 
         c._remaddr = GetHostadress(c._socket.Client.RemoteEndPoint.ToString)
@@ -362,11 +352,11 @@ Public Class WolServer
                                         Throw New NotImplementedException(rplcodes.ERR_UNKNOWNCOMMAND & " " & params(0) & " :Unknown Command")
                                     End If
                             Catch ex As NotImplementedException
-                                socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+                                socket.Send(":" & network_adress & " " & ex.Message)
                                 RaiseEvent Exception("[Command]: " & socket.GetNick & " : " & ex.Message)
                                 Exit Sub
                             Catch ex As ArgumentException
-                                socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+                                socket.Send(":" & network_adress & " " & ex.Message)
                                 RaiseEvent Exception("[Command]: " & socket.GetNick & " : " & ex.Message)
                                 Exit Sub
                             End Try
@@ -409,11 +399,11 @@ Public Class WolServer
     End Sub
 
     Sub putReply(socket As WolClient, ByVal replycode As String)
-        socket.Send(":" & Getnetwork_adress & " " & replycode)
+        socket.Send(":" & network_adress & " " & replycode)
     End Sub
 
     Sub putReply(socket As WolClient, ByVal replycode As String, Message As String)
-        socket.Send(":" & Getnetwork_adress & " " & replycode & " " & Message)
+        socket.Send(":" & network_adress & " " & replycode & " " & Message)
     End Sub
 
     Sub putPage(ByVal socket As WolClient, Message As String)
@@ -429,12 +419,12 @@ Public Class WolServer
     End Sub
 
     Sub putReply(socket As WolClient, ByVal replycode As String, Nickname As String, ByVal Message As String)
-        socket.Send(":" & Getnetwork_adress & " " & replycode & " " & Nickname & " " & Message)
+        socket.Send(":" & network_adress & " " & replycode & " " & Nickname & " " & Message)
     End Sub
 
     Private Sub WolServer_handle_ADVERTR_command(chan As String, socket As WolClient) Handles Me.handle_ADVERTR_command
         putCommand(socket, "ADVERTR", "5 " & chan & "\n\r")
-        socket.Send(":" & Getnetwork_adress & " ADVERTR 5 " & chan)
+        socket.Send(":" & network_adress & " ADVERTR 5 " & chan)
     End Sub
 
     Private Sub WolServer_handle_apgar_command(APGAR As String, _unkint As String, socket As WolClient) Handles Me.handle_apgar_command
@@ -463,7 +453,7 @@ Public Class WolServer
 
     Private Sub WolServer_handle_MOTD_command(socket As WolClient) Handles Me.handle_MOTD_command
         SyncLock lock
-            If get_MOTD_File <> Nothing Then
+            If _motdfile <> Nothing Then
                 Dim motd() As String
 
                 If socket.Iswolhost = True Then
@@ -472,8 +462,8 @@ Public Class WolServer
                     putReply(socket, rplcodes.RPL_MOTDSTART, ":- " & _irc_network_fqdn & " Message of the day -")
                 End If
 
-                If File.Exists(get_MOTD_File) Then
-                    motd = File.ReadAllLines(get_MOTD_File)
+                If File.Exists(_motdfile) Then
+                    motd = File.ReadAllLines(_motdfile)
                     For i As Integer = 0 To motd.Length - 1
                         putReply(socket, rplcodes.RPL_MOTD, socket.GetNick, ":- " & motd(i) & "")
                     Next
@@ -726,7 +716,7 @@ Public Class WolServer
     End Sub
 
     Private Sub WolServer_handle_ping_command(socket As WolClient) Handles Me.handle_ping_command
-        putReply(socket, Getnetwork_adress, "PONG : " & Getnetwork_adress)
+        putReply(socket, network_adress, "PONG : " & network_adress)
     End Sub
 
     Private Sub WolServer_handle_LIST_command(type As String, gameid As String, socket As WolClient) Handles Me.handle_LIST_command
@@ -801,7 +791,7 @@ Public Class WolServer
                 End If
             Catch ex As InvalidDataException
                 RaiseEvent Exception("[JOIN]: " & socket.GetNick & ": -> " & ex.Message)
-                socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+                socket.Send(":" & network_adress & " " & ex.Message)
             End Try
         End SyncLock
     End Sub
@@ -862,7 +852,7 @@ Public Class WolServer
                 Throw New InvalidDataException(rplcodes.ERR_BADCHANMASK & " " & channel & " :Bad Channel Mask")
             End If
         Catch ex As InvalidDataException
-            socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+            socket.Send(":" & network_adress & " " & ex.Message)
             RaiseEvent ServerState("[PART]: " & socket.GetNick & ": -> " & ex.Message)
         End Try
     End Sub
@@ -953,16 +943,16 @@ Public Class WolServer
                     End If
 
 
-                    End If
+                End If
             Catch ex As InvalidDataException
                 RaiseEvent Exception("[JOINGAME]: " & ex.Message)
-                socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+                socket.Send(":" & network_adress & " " & ex.Message)
             End Try
         End SyncLock
     End Sub
 
     Private Sub putCommand(Socket As WolClient, ByVal command As String, ByVal params As String)
-        Socket.Send(":" & Getnetwork_adress & " " & command & " :" & params)
+        Socket.Send(":" & network_adress & " " & command & " :" & params)
     End Sub
 
     Private Function gethostbyuser(host As String, channel As Chatchannel) As Boolean
@@ -1047,7 +1037,7 @@ Public Class WolServer
             End If
 
         Catch ex As NotImplementedException
-            socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+            socket.Send(":" & network_adress & " " & ex.Message)
             RaiseEvent ServerState(ex.Message)
             RemoveClient(socket)
         End Try
@@ -1099,7 +1089,21 @@ Public Class WolServer
 
                 If username = "TibSun" AndAlso password = "TibPass99" AndAlso CDbl(version) = CDbl(vercheck.GetAllowedVersionbySKU("WOL", sku)) Then
                     If new_patchversion = 0 Then
-                        send_Servers(socket)
+
+                        'Announce My-Server...
+
+                        putReply(socket, rplcodes.RPL_WOLSERV, network_adress & " 4005 '0:(" & network_adress & ") " & _srvname & "' -" & _timezone & " 36.1083 -115.0582")
+                        putReply(socket, rplcodes.RPL_GAMERES_SERV, network_adress & " 4807 '(" & network_adress & ") " & _srvname & "' -" & _timezone & " 36.1083 -115.0582")
+                        putReply(socket, rplcodes.RPL_LADDERSERV, network_adress & " 4007 '(" & network_adress & ") " & _srvname & "' -" & _timezone & " 36.1083 -115.0582")
+                        putReply(socket, rplcodes.RPL_PINGERVER, network_adress & " 0 '(" & network_adress & ") " & _srvname & "' -" & _timezone & " 36.1083 -115.0582")
+
+                        putReply(socket, rplcodes.RPL_WDTSERVER, network_adress & " 4005 '(" & network_adress & ") WDT-Server' -" & _timezone & " 36.1083 -115.0582")
+                        putReply(socket, rplcodes.RPL_MANGLERSERV, network_adress & " 48321 '(" & network_adress & ") Port-Mangler' -" & _timezone & " 36.1083 -115.0582")
+                        putReply(socket, rplcodes.RPL_TICKETSERV, network_adress & " 48018 '(" & network_adress & ") Ticket-Server ' -" & _timezone & " 36.1083 -115.0582")
+
+                        If _multiserver = "1" Then
+                            send_Servers(socket)
+                        End If
                     Else
                         putReply(socket, rplcodes.RPL_UPDATE_FTP, "u :" & Get_patch_informations(socket.GetCver2, socket.GetGameVersion, CStr(new_patchversion)))
                     End If
@@ -1249,7 +1253,6 @@ Public Class WolServer
                 Dim max As Integer = 0
                 Dim _line As String = ""
 
-                'TODO: Add YR and others :D
                 Dim entry As String = Nothing
 
                 For Each s As server In Servers
@@ -1261,7 +1264,7 @@ Public Class WolServer
                     putReply2(socket, s.type, "u :" & _line)
                 Next
             Catch ex As NotImplementedException
-                socket.Send(":" & Getnetwork_adress & " " & ex.Message)
+                socket.Send(":" & network_adress & " " & ex.Message)
                 RaiseEvent handle_quit_command(socket)
             End Try
         End SyncLock
@@ -1276,51 +1279,58 @@ Public Class WolServer
     End Sub
 
     Public Sub loadServers(rplcode As String)
-        Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
-        Dim entry As String = Nothing
-        Dim parts() As String
-        Dim max As Integer = 0
+        If File.Exists(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini") Then
+            Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
+            Dim entry As String = Nothing
+            Dim parts() As String
+            Dim max As Integer = 0
 
-        max = CInt(ini_func.WertLesen("INFO", rplcode & "_count"))
+            max = CInt(ini_func.WertLesen("INFO", rplcode & "_count"))
 
 
-        For i As Integer = 0 To max - 1
-            entry = ini_func.WertLesen(rplcode, CStr(i))
-            parts = entry.Split(CChar(";"))
+            For i As Integer = 0 To max - 1
+                entry = ini_func.WertLesen(rplcode, CStr(i))
+                parts = entry.Split(CChar(";"))
 
-            Dim c As New server
-            c.addrr = parts(0)
-            c.port = parts(1)
-            c.type = rplcode
+                Dim c As New server
+                c.addrr = parts(0)
+                c.port = parts(1)
+                c.type = rplcode
 
-            If rplcode = "605" Then
-                c.unk = CStr(i)
-            End If
-            If parts(5) <> "" Then
+                If rplcode = "605" Then
+                    c.unk = CStr(i)
+                End If
 
-                c.name = parts(5)
-            Else
-                RaiseEvent Exception("WARN: Load-Servers: no Servername specified for entry " & i.ToString & " in Section " & c.type & ", ... using " & c.addrr & " as ServerName!")
-                c.name = c.addrr
-            End If
-            c.tzone = parts(2)
-            c.lon = parts(3)
-            c.lat = parts(4)
+                If parts(5) <> "" Then
 
-            Servers.Add(c)
-        Next
+                    c.name = parts(5)
+                Else
+                    RaiseEvent Exception("WARN: Load-Servers: no Servername specified for entry " & i.ToString & " in Section " & c.type & ", ... using " & c.addrr & " as ServerName!")
+                    c.name = c.addrr
+                End If
+                c.tzone = parts(2)
+                c.lon = parts(3)
+                c.lat = parts(4)
+
+                Servers.Add(c)
+            Next
+        Else
+            RaiseEvent Exception("Cant find " & My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
+        End If
     End Sub
 
     Private Function get_lobbycount() As String
-        Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
-        Dim max As Integer = 0
+        If File.Exists(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini") Then
+            Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
+            Dim max As Integer = 0
 
-        max = CInt(ini_func.WertLesen("INFO", "605_count"))
+            max = CInt(ini_func.WertLesen("INFO", "605_count"))
 
-        If CStr(max) IsNot Nothing Then
-            Return CStr(max)
-        Else
-            Return "1"
+            If CStr(max) IsNot Nothing Then
+                Return CStr(max)
+            Else
+                Return "1"
+            End If
         End If
     End Function
 

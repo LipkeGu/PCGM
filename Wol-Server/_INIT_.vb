@@ -1,4 +1,6 @@
-﻿Public Class wol_main
+﻿Imports System.IO
+
+Public Class wol_main
 
     Dim WithEvents chatserv As New ClassLibrary1.WolServer
     Dim WithEvents ladderserv As New ClassLibrary1.LadderServer
@@ -11,78 +13,139 @@
     Private _Ladderserv_port As String = "4007"
     Private _Mangler_port As String = "4321"
     Private _Ticketsrv_port As String = "4018"
-    Private _path_to_motd As String = ""
+    Private _path_to_motd As String = My.Application.Info.DirectoryPath & "\conf\motd.txt"
+    Private _woltimezone As String = "5"
+    Private _multiserver As String = "0"
+
 
     Public Sub INIT()
-        Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\config.ini")
-        Set_NetworkAddress = ini_func.WertLesen("MAIN", "Network-Address")
-        Set_GameServer_port = ini_func.WertLesen("MAIN", "GameServer-Port")
-        Set_Ladderserver_port = ini_func.WertLesen("MAIN", "LadderServer-port")
-        Set_Network_Name = ini_func.WertLesen("MAIN", "Network-Name")
-        set_modfile = ini_func.WertLesen("MAIN", "motdfile-path")
+        If File.Exists(My.Application.Info.DirectoryPath & "\conf\config.ini") Then
+            Dim ini_func As New INIDatei(My.Application.Info.DirectoryPath & "\conf\config.ini")
+            NetworkAddress = ini_func.WertLesen("MAIN", "Network-Address")
+            GameServer_port = ini_func.WertLesen("MAIN", "GameServer-Port")
+            ManglerServer_port = ini_func.WertLesen("MAIN", "ManglerServer-Port")
+            LadderServer_port = ini_func.WertLesen("MAIN", "LadderServer-port")
+            Networkname = ini_func.WertLesen("MAIN", "Network-Name")
+            TicketServer_port = ini_func.WertLesen("MAIN", "TicketServer-port")
+            wol_timezone = ini_func.WertLesen("MAIN", "WOL-Timezone")
+            multiserver = ini_func.WertLesen("MAIN", "WOL-multiserver")
 
-        If _path_to_motd = "-" Then
-            set_modfile = My.Application.Info.DirectoryPath & "\conf\motd.txt"
+        Else
+            NetworkAddress = _networkname
+            Networkname = _networkaddr
+            GameServer_port = _Gamesrv_port
+            GameResServer_port = _Gameres_port
+            ManglerServer_port = _Mangler_port
+            TicketServer_port = _Ticketsrv_port
+            wol_timezone = _woltimezone
+            multiserver = _multiserver
         End If
 
-        chatserv.StartServer(CInt(_Gamesrv_port), Networkname, Network_Address)
-        chatserv.StartServer(4000, Networkname, Network_Address)
-        ladderserv.StartServer(CInt(_Ladderserv_port), Networkname, Network_Address)
-        GameResserv.StartServer(CInt(_Gameres_port), Networkname, Network_Address)
+        _path_to_motd = My.Application.Info.DirectoryPath & "\conf\motd.txt"
+
+        chatserv.network_adress = NetworkAddress
+        chatserv.StartServer(CInt(GameServer_port))
+        chatserv.StartServer(4000) 'WOLV1 must run on Port 4000!
+        chatserv.ServerName = Networkname
+        chatserv._motdfile = MOTDFILE
+        chatserv._timezone = wol_timezone
+
+        ladderserv.StartServer(CInt(LadderServer_port))
+        GameResserv.StartServer(CInt(GameResServer_port))
     End Sub
 
-    Public ReadOnly Property Networkname As String
+#Region "Propertys"
+
+    Public Property multiserver As String
+        Get
+            Return _multiserver
+        End Get
+        Set(value As String)
+            _multiserver = value
+        End Set
+    End Property
+
+    Public Property wol_timezone As String
+        Get
+            Return _woltimezone
+        End Get
+        Set(value As String)
+            _woltimezone = value
+        End Set
+    End Property
+
+    Public Property TicketServer_port As String
+        Get
+            Return _Ticketsrv_port
+        End Get
+        Set(value As String)
+            _Ticketsrv_port = value
+        End Set
+    End Property
+
+    Public Property ManglerServer_port As String
+        Get
+            Return _Mangler_port
+        End Get
+        Set(value As String)
+            _Mangler_port = value
+        End Set
+    End Property
+
+    Public Property GameResServer_port As String
+        Get
+            Return _Gameres_port
+        End Get
+        Set(value As String)
+            _Gameres_port = value
+        End Set
+    End Property
+
+    Public Property MOTDFILE As String
+        Get
+            Return _path_to_motd
+        End Get
+        Set(value As String)
+            _path_to_motd = value
+        End Set
+    End Property
+
+
+    Public Property Networkname As String
         Get
             Return _networkname
         End Get
-    End Property
-
-    Public WriteOnly Property Set_Network_Name As String
         Set(value As String)
             _networkname = value
         End Set
     End Property
 
-    Public ReadOnly Property GameServer_port As String
+    Public Property GameServer_port As String
         Get
             Return _Gamesrv_port
         End Get
-    End Property
-
-    Private WriteOnly Property Set_GameServer_port As String
         Set(value As String)
             _Gamesrv_port = value
         End Set
     End Property
 
-    Public ReadOnly Property LadderServer_port As String
+    Public Property LadderServer_port As String
         Get
             Return _Ladderserv_port
         End Get
-    End Property
-
-    Private WriteOnly Property Set_Ladderserver_port As String
         Set(value As String)
             _Ladderserv_port = value
         End Set
     End Property
 
-    Public ReadOnly Property Network_Address As String
+    Public Property NetworkAddress As String
         Get
             Return _networkaddr
         End Get
-    End Property
-
-    Private WriteOnly Property Set_NetworkAddress As String
         Set(value As String)
             _networkaddr = value
         End Set
-    End Property
 
-    Public WriteOnly Property set_modfile As String
-        Set(value As String)
-            chatserv.set_MOTD_File = value
-        End Set
     End Property
 
     Public Event Report_info(ByVal message As String)
@@ -128,4 +191,6 @@
     Private Sub ladderserv_ServerState(e As String) Handles ladderserv.ServerState
         RaiseEvent Report_info("[Ladder-Server]: " & e)
     End Sub
+#End Region
+
 End Class

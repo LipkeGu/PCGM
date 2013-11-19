@@ -23,7 +23,7 @@ Public Class GameResServer
         End Get
     End Property
 
-    Public Sub StartServer(ByVal port As Integer, ByVal srvname As String, ByVal irc_network As String)
+    Public Sub StartServer(ByVal port As Integer)
         Try
             _Listener = New TcpListener(IPAddress.Any, port)
             _Listener.ExclusiveAddressUse = False

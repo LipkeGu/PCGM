@@ -1,6 +1,7 @@
 ﻿Imports System.IO
 Public Class AccProvider
     Dim xml_func As New xmldatei
+    Dim lock As Object
 
     Public Function DoesUserExist(username As String) As Boolean
         Dim _line As String = My.Application.Info.DirectoryPath & "\Users\wol_" & username & ".xml"
@@ -13,23 +14,29 @@ Public Class AccProvider
     End Function
 
     Public Function GetPassword(client_type As String, ByVal username As String) As String
+
         If File.Exists(My.Application.Info.DirectoryPath & "\Users\wol_" & username & ".xml") Then
             Dim acc As Account = xml_func.LoadXML(My.Application.Info.DirectoryPath & "\Users\wol_" & username & ".xml")
-
-            For Each a As Account.accountinfo In acc.AllAdresses
-                If a.Nickname = username Then
-                    If a.Password <> "" Then
-                        Return a.Password
-                        Exit Function
+            SyncLock lock
+                For Each a As Account.accountinfo In acc.AllAdresses
+                    If a.Nickname = username Then
+                        If a.Password <> "" Then
+                            Return a.Password
+                            Exit Function
+                        Else
+                            Throw New InvalidOperationException("AccountManager::GetPassword: Der Account besitzt ein leeres Password!!! (Kaputter Account?!?!): " & username)
+                            Return Nothing
+                        End If
                     Else
-                        Throw New InvalidOperationException("AccountManager::GetPassword: Der Account besitzt ein leeres Password!!! (Kaputter Account?!?!): " & username)
-                        Return ""
+                        Return Nothing
                     End If
-                End If
-            Next
+                Next
+            End SyncLock
         Else
             Throw New InvalidOperationException("AccountManager::GetPassword: Das hätte nicht passieren sollen... ; Requested Account-Infos for: " & username)
+            Return Nothing
         End If
+
     End Function
 
     Public Function AddUser(ByVal client_type As String, ByVal Username As String, ByVal Password As String, socket As WolClient) As Integer

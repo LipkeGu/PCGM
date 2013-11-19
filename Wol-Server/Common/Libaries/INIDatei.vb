@@ -39,13 +39,13 @@ Public Class INIDatei
         Try
             ' Testen, ob ein Pfad zur INI vorhanden ist
             If Pfad = "" Then
-                WertLesen = "Lesefehler"
+                WertLesen = ""
                 Exit Function
             End If
 
             ' Testen, ob die Datei existiert
             If IO.File.Exists(Pfad) = False Then
-                WertLesen = "Lesefehler"
+                WertLesen = ""
                 Exit Function
             End If
         Catch ex As Exception

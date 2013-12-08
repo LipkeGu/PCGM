@@ -220,7 +220,7 @@ Public Class WolServer
                                         RaiseEvent handle_ADVERTR_command(params(1), socket)
                                     End If
                                 ElseIf params(0).Contains("MOTD") Then
-                                    If socket.Iswolhost = False Then RaiseEvent handle_MOTD_command(socket)
+                                    If socket.Is_wolhost = False Then RaiseEvent handle_MOTD_command(socket)
 
                                 ElseIf params(0).Contains("SERIAL") Then
                                         If params.Length < 1 Then
@@ -353,11 +353,11 @@ Public Class WolServer
                                     End If
                             Catch ex As NotImplementedException
                                 socket.Send(":" & network_adress & " " & ex.Message)
-                                RaiseEvent Exception("[Command]: " & socket.GetNick & " : " & ex.Message)
+                                RaiseEvent Exception("[Command]: " & socket.Nick & " : " & ex.Message)
                                 Exit Sub
                             Catch ex As ArgumentException
                                 socket.Send(":" & network_adress & " " & ex.Message)
-                                RaiseEvent Exception("[Command]: " & socket.GetNick & " : " & ex.Message)
+                                RaiseEvent Exception("[Command]: " & socket.Nick & " : " & ex.Message)
                                 Exit Sub
                             End Try
                         End If
@@ -394,7 +394,7 @@ Public Class WolServer
                 socket._stream = Nothing
             End If
             ConnectedClients.Remove(socket)
-            RaiseEvent Connection_closed("Verbindung beendet: " & socket.Gethostname)
+            RaiseEvent Connection_closed("Verbindung beendet: " & socket.Hostname)
         End SyncLock
     End Sub
 
@@ -407,7 +407,7 @@ Public Class WolServer
     End Sub
 
     Sub putPage(ByVal socket As WolClient, Message As String)
-        socket.Send(":" & "ChanServ" & " PAGE " & socket.GetNick & " :" & Message)
+        socket.Send(":" & "ChanServ" & " PAGE " & socket.Nick & " :" & Message)
     End Sub
 
     Sub putReply2(socket As WolClient, ByVal replycode As String, Message As String)
@@ -429,26 +429,26 @@ Public Class WolServer
 
     Private Sub WolServer_handle_apgar_command(APGAR As String, _unkint As String, socket As WolClient) Handles Me.handle_apgar_command
         If Not APGAR = "oeakaaaa" Then ' Password: "" (leer)
-            If socket.isRegistered Then
-                If APGAR = userprovider.GetPassword("WOL", socket.GetNick) Then
-                    socket.SetApgar = APGAR
+            If socket.Registered Then
+                If APGAR = userprovider.GetPassword("WOL", socket.Nick) Then
+                    socket.password = APGAR
                 Else
-                    putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.GetNick & " :Bad Password/Nickname.")
+                    putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.Nick & " :Bad Password/Nickname.")
                     RemoveClient(socket)
                     Exit Sub
                 End If
             Else
-                userprovider.AddUser("WOL", socket.GetNick, APGAR, socket)
-                socket.set_isregistered = True
+                userprovider.AddUser("WOL", socket.Nick, APGAR, socket)
+                socket.Registered = True
             End If
         Else
-            putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.GetNick & " :Bad Password/Nickname.")
+            putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.Nick & " :Bad Password/Nickname.")
             RemoveClient(socket)
         End If
     End Sub
 
     Private Sub WolServer_handle_GETLOCALE_command(ByVal nicks As String, ByVal socket As WolClient) Handles Me.handle_GETLOCALE_command 'FIXME
-        putReply(socket, rplcodes.RPL_LOCALE, socket.GetNick, socket.GetNick & "`" & socket.Getlocale)
+        putReply(socket, rplcodes.RPL_LOCALE, socket.Nick, socket.Nick & "`" & socket.locale)
     End Sub
 
     Private Sub WolServer_handle_MOTD_command(socket As WolClient) Handles Me.handle_MOTD_command
@@ -456,8 +456,8 @@ Public Class WolServer
             If _motdfile <> Nothing Then
                 Dim motd() As String
 
-                If socket.Iswolhost = True Then
-                    putReply(socket, rplcodes.RPL_MOTDSTART, ":- Willkommen, " & socket.GetNick & "!")
+                If socket.Is_wolhost = True Then
+                    putReply(socket, rplcodes.RPL_MOTDSTART, ":- Willkommen, " & socket.Nick & "!")
                 Else
                     putReply(socket, rplcodes.RPL_MOTDSTART, ":- " & _irc_network_fqdn & " Message of the day -")
                 End If
@@ -465,7 +465,7 @@ Public Class WolServer
                 If File.Exists(_motdfile) Then
                     motd = File.ReadAllLines(_motdfile)
                     For i As Integer = 0 To motd.Length - 1
-                        putReply(socket, rplcodes.RPL_MOTD, socket.GetNick, ":- " & motd(i) & "")
+                        putReply(socket, rplcodes.RPL_MOTD, socket.Nick, ":- " & motd(i) & "")
                     Next
                 End If
             Else
@@ -477,21 +477,21 @@ Public Class WolServer
     End Sub
 
     Private Sub WolServer_handle_cvers_command(version As String, sku As String, socket As WolClient) Handles Me.handle_cvers_command
-        socket.SetCver1 = version
-        socket.SetCver2 = sku
-        socket.SetWoltyp = True
-        socket.SetGameID = vercheck.GetClient_GroupbySKU("WOL", sku)
+        socket.Cver1 = version
+        socket.Cver2 = sku
+        socket.Is_wolhost = True
+        socket.GameID = vercheck.GetClient_GroupbySKU("WOL", sku)
     End Sub
 
     Private Sub WolServer_handle_GETCODEPAGE_command(nick As String, socket As WolClient) Handles Me.handle_GETCODEPAGE_command
-        putReply(socket, rplcodes.RPL_CODEPAGE, nick, nick & "`" & socket.GetCodepage)
+        putReply(socket, rplcodes.RPL_CODEPAGE, nick, nick & "`" & socket.codepage)
 
     End Sub
 
     Private Sub WolServer_handle_user_command(param As String, socket As WolClient) Handles Me.handle_user_command
 
-        If Not socket.isRegistered Then
-            socket.set_isregistered = True
+        If Not socket.Registered Then
+            socket.Registered = True
         End If
 
         RaiseEvent handle_ping_command(socket)
@@ -630,7 +630,7 @@ Public Class WolServer
                 End If
 
                 If suspicious_char = True Then
-                    putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.GetNick & " :Nickname not allowed!")
+                    putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.Nick & " :Nickname not allowed!")
                     RemoveClient(socket)
                 Else
                     Dim _unique As Boolean = True
@@ -638,7 +638,7 @@ Public Class WolServer
                         For Each channel As Chatchannel In chanprovider.channels
                             For Each user As WolClient In channel.sockets
                                 If channel.sockets.Count > 0 Then
-                                    If nick = user.GetNick Then
+                                    If nick = user.Nick Then
                                         _unique = False
                                     End If
                                 End If
@@ -647,19 +647,19 @@ Public Class WolServer
                     End SyncLock
 
                     If Not _unique Then
-                        putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.GetNick & " :Nickname already in Use!")
+                        putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.Nick & " :Nickname already in Use!")
                         RemoveClient(socket)
                     Else
-                        socket.SetNick = nick
+                        socket.Nick = nick
                         If userprovider.DoesUserExist(nick) Then
-                            socket.set_isregistered = True
+                            socket.Registered = True
                         Else
-                            socket.set_isregistered = False
+                            socket.Registered = False
                         End If
                     End If
                 End If
             Else
-                putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.GetNick & " :Nickname not allowed!")
+                putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.Nick & " :Nickname not allowed!")
                 RemoveClient(socket)
             End If
         End SyncLock
@@ -667,9 +667,9 @@ Public Class WolServer
 
     Private Sub WolServer_handle_pass_command(password As String, socket As WolClient) Handles Me.handle_pass_command
         'GUIDO: Man sollte es rausnehmen... da das wirkliche Password mittels Apgar übertragen wird und nicht hier... =/
-        If socket.Iswolhost Then
+        If socket.Is_wolhost Then
             If password <> "supersecret" Then
-                putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.GetNick & " :Bad Login!")
+                putReply(socket, rplcodes.ERR_APGARMISSMATCH & " " & socket.Nick & " :Bad Login!")
                 RemoveClient(socket)
             End If
         End If
@@ -678,41 +678,41 @@ Public Class WolServer
     Private Sub WolServer_handle_SETCODEPAGE_command(codepage As String, socket As WolClient) Handles Me.handle_SETCODEPAGE_command
         If codepage = "" Then codepage = "1252"
 
-        If socket.GetCodepage = codepage Then
-            putReply(socket, rplcodes.RPL_CODEPAGESET, socket.GetNick, codepage)
+        If socket.codepage = codepage Then
+            putReply(socket, rplcodes.RPL_CODEPAGESET, socket.Nick, codepage)
         Else
-            socket.SetCodePage = CInt(codepage)
-            putReply(socket, rplcodes.RPL_CODEPAGESET, socket.GetNick, codepage)
+            socket.codepage = codepage
+            putReply(socket, rplcodes.RPL_CODEPAGESET, socket.Nick, codepage)
         End If
     End Sub
 
     Private Sub WolServer_handle_SQUADINFO_command(squad As String, socket As WolClient) Handles Me.handle_SQUADINFO_command
         If squad = "0" Then
-            putReply(socket, rplcodes.RPL_SQUADINFO, socket.GetNick & " :ID does not Exist")
+            putReply(socket, rplcodes.RPL_SQUADINFO, socket.Nick & " :ID does not Exist")
         End If
     End Sub
 
     Private Sub WolServer_handle_SETLOCALE_command(locale As String, socket As WolClient) Handles Me.handle_SETLOCALE_command
         Try
             If locale = "5" Or locale = "0" Then
-                socket.SetLocale = CInt(locale)
+                socket.locale = locale
 
-                If socket.Getlocale = locale Then
-                    putReply(socket, rplcodes.RPL_LOCALESET, socket.GetNick, locale)
+                If socket.locale = locale Then
+                    putReply(socket, rplcodes.RPL_LOCALESET, socket.Nick, locale)
                 End If
             Else
                 Throw New InvalidDataException("Your Location is not supported on this Server!")
             End If
         Catch ex As Exception
-            RaiseEvent ServerState(socket.GetNick & " benutzt einen nicht erlaubten Standort!")
-            putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.GetNick & " :" & ex.Message)
+            RaiseEvent ServerState(socket.Nick & " benutzt einen nicht erlaubten Standort!")
+            putReply(socket, rplcodes.ERR_APGARMISSMATCH, socket.Nick & " :" & ex.Message)
             RemoveClient(socket)
         End Try
     End Sub
 
     Private Sub WolServer_handle_setopt_command(opt1 As String, opt2 As String, socket As WolClient) Handles Me.handle_setopt_command
-        socket.SetSetopt1 = CInt(opt1)
-        socket.SetSetopt2 = CInt(opt2)
+        socket.opt1 = opt1
+        socket.opt2 = CInt(opt2)
     End Sub
 
     Private Sub WolServer_handle_ping_command(socket As WolClient) Handles Me.handle_ping_command
@@ -721,16 +721,16 @@ Public Class WolServer
 
     Private Sub WolServer_handle_LIST_command(type As String, gameid As String, socket As WolClient) Handles Me.handle_LIST_command
 
-        putReply(socket, rplcodes.RPL_LISTSTART, socket.GetNick, " :Listing Channels...")
+        putReply(socket, rplcodes.RPL_LISTSTART, socket.Nick, " :Listing Channels...")
         If type = "0" Then
             GetChannelList(type, gameid, socket)
 
         ElseIf type = gameid Then
             GetGameList(type, gameid, socket)
         ElseIf type = "-1" Then
-            putReply(socket, rplcodes.RPL_LIST, socket.GetNick & " #Chat 0 0 0 388:")
+            putReply(socket, rplcodes.RPL_LIST, socket.Nick & " #Chat 0 0 0 388:")
         End If
-        putReply(socket, rplcodes.RPL_ENDOFLIST, socket.GetNick, " :End of LIST")
+        putReply(socket, rplcodes.RPL_ENDOFLIST, socket.Nick, " :End of LIST")
     End Sub
 
     Private Sub WolServer_handle_JOIN_command(chan As String, chanpass As String, socket As WolClient) Handles Me.handle_JOIN_command
@@ -745,70 +745,70 @@ Public Class WolServer
                     Dim tmpchan As Chatchannel = GetChatchannelbyName(chan)
 
                     If tmpchan IsNot Nothing Then
-                        If tmpchan.key <> "" Then ' Chaannel passwort gesetzt ?
+                        If tmpchan.Chan_Key <> "" Then ' Chaannel passwort gesetzt ?
                             chan_has_key = True
                         Else
                             chan_has_key = False
                         End If
 
-                        If tmpchan.key = chanpass Then
+                        If tmpchan.Chan_Key = chanpass Then
                             key_is_matching = True
                         Else
                             key_is_matching = False
                         End If
 
-                        If CInt(tmpchan.sockets.Count) < CInt(tmpchan.Max_Users) Then
+                        If CInt(tmpchan.sockets.Count) < CInt(tmpchan.Chan_Max_Users) Then
                             If Not tmpchan.sockets.Contains(socket) Then
                                 tmpchan.sockets.Add(socket)
                             Else
                                 already_in_chan = True
-                                Throw New InvalidDataException(rplcodes.ERR_USERONCHANNEL & " " & chan & " :You are already on that Channel" & tmpchan.GetName)
+                                Throw New InvalidDataException(rplcodes.ERR_USERONCHANNEL & " " & chan & " :You are already on that Channel" & tmpchan.Chan_Name)
                             End If
-                            If socket.get_wolversion = "1" Then
+                            If socket.wolversion = "1" Then
                                 ParamReply(socket, "JOIN", chan)
                             Else
-                                ParamReply(socket, "JOIN :", "0," & socket.GetIPasLong & " " & chan)
+                                ParamReply(socket, "JOIN :", "0," & socket.IPasLong & " " & chan)
                             End If
 
-                            RaiseEvent handle_NAMES_command(tmpchan.GetName, socket)
+                            RaiseEvent handle_NAMES_command(tmpchan.Chan_Name, socket)
                             RaiseEvent handle_LIST_command(socket.gameid, socket.gameid, socket)
 
-                            If socket.GetSerial = "" AndAlso socket.GetSerialReport = False Then
+                            If socket.Serial = "" AndAlso socket.Serial_Report = False Then
                                 putPage(socket, "Beim Login, wurde festgestellt, dass das Spiel fehlerhaft Installiert wurde...")
                                 putPage(socket, "Stelle bitte sicher, dass das Spiel korrekt in der Registry eingetragen wurde!")
-                                socket.SetSerialReportstate = True
-                                socket.SetTournamentAllowedState = False
+                                socket.Serial_Report = True
+                                socket.TournamentAllowed_State = False
                             End If
                         Else
-                            Throw New InvalidDataException(rplcodes.ERR_CHANNELISFULL & " " & tmpchan.GetName & " :Channel is Full")
+                            Throw New InvalidDataException(rplcodes.ERR_CHANNELISFULL & " " & tmpchan.Chan_Name & " :Channel is Full")
                         End If
                     Else
                         chan_exists = False
-                        Throw New InvalidDataException(rplcodes.ERR_NOSUCHCHANNEL & " " & tmpchan.GetName & " :No such Channel...")
+                        Throw New InvalidDataException(rplcodes.ERR_NOSUCHCHANNEL & " " & tmpchan.Chan_Name & " :No such Channel...")
                     End If
                 Else
                     Throw New InvalidDataException(rplcodes.ERR_BADCHANMASK & " " & chan & " :Bad Channel Mask ")
                 End If
             Catch ex As InvalidDataException
-                RaiseEvent Exception("[JOIN]: " & socket.GetNick & ": -> " & ex.Message)
+                RaiseEvent Exception("[JOIN]: " & socket.Nick & ": -> " & ex.Message)
                 socket.Send(":" & network_adress & " " & ex.Message)
             End Try
         End SyncLock
     End Sub
 
     Public Sub SendGamechannames(ByVal chan As Chatchannel, listtype As String, socket As WolClient)
-        putReply(socket, rplcodes.RPL_NAMREPLY, socket.GetNick, "* " & chan.GetName & " :@" & chan.GetOwner.GetNick & ",0," & chan.GetOwner.GetIPasLong)
+        putReply(socket, rplcodes.RPL_NAMREPLY, socket.Nick, "* " & chan.Chan_Name & " :@" & chan.Chan_Owner.Nick & ",0," & chan.Chan_Owner.IPasLong)
 
         For i As Integer = 0 To chan.sockets.Count - 1
-            If chan.sockets.Item(i).GetNick <> chan.GetOwner.GetNick AndAlso socket.GetNick <> chan.sockets.Item(i).GetNick Then
-                putReply(socket, rplcodes.RPL_NAMREPLY, socket.GetNick, "* " & chan.GetName & " :" & chan.sockets.Item(i).GetNick & ",0," & chan.sockets.Item(i).GetIPasLong)
+            If chan.sockets.Item(i).Nick <> chan.Chan_Owner.Nick AndAlso socket.Nick <> chan.sockets.Item(i).Nick Then
+                putReply(socket, rplcodes.RPL_NAMREPLY, socket.Nick, "* " & chan.Chan_Name & " :" & chan.sockets.Item(i).Nick & ",0," & chan.sockets.Item(i).IPasLong)
             End If
         Next
-        If socket.GetNick <> chan.GetOwner.GetNick Then
-            putReply(socket, rplcodes.RPL_NAMREPLY, socket.GetNick, "* " & chan.GetName & " :" & socket.GetNick & ",0," & socket.GetIPasLong)
+        If socket.Nick <> chan.Chan_Owner.Nick Then
+            putReply(socket, rplcodes.RPL_NAMREPLY, socket.Nick, "* " & chan.Chan_Name & " :" & socket.Nick & ",0," & socket.IPasLong)
         End If
 
-        putReply(socket, rplcodes.RPL_ENDOFNAMES, socket.GetNick & " " & chan.GetName & " :End of Names")
+        putReply(socket, rplcodes.RPL_ENDOFNAMES, socket.Nick & " " & chan.Chan_Name & " :End of Names")
     End Sub
 
     Private Sub WolServer_handle_PART_command(channel As String, socket As WolClient) Handles Me.handle_PART_command
@@ -820,29 +820,29 @@ Public Class WolServer
                     If _tmp_chan.sockets.Contains(socket) Then
                         _tmp_chan.sockets.Remove(socket)
 
-                        If _tmp_chan.GetOwner IsNot Nothing Then
-                            If _tmp_chan.GetOwner.Equals(socket) Then
-                                _tmp_chan.Owner = Nothing
+                        If _tmp_chan.Chan_Owner IsNot Nothing Then
+                            If _tmp_chan.Chan_Owner.Equals(socket) Then
+                                _tmp_chan.Chan_Owner = Nothing
                             End If
                         End If
 
                         ParamReply(socket, "PART", channel)
 
-                        If _tmp_chan.sockets.Count = 0 AndAlso _tmp_chan.LIstType <> "0" Then
+                        If _tmp_chan.sockets.Count = 0 AndAlso _tmp_chan.Chan_ListType <> "0" Then
                             If chanprovider.channels.Contains(_tmp_chan) Then
-                                RaiseEvent ServerState("Removing Channel: " & _tmp_chan.GetName)
+                                RaiseEvent ServerState("Removing Channel: " & _tmp_chan.Chan_Name)
                                 chanprovider.channels.Remove(_tmp_chan)
                             End If
                         Else
                             For Each player As WolClient In _tmp_chan.sockets
-                                If socket.GetNick <> player.GetNick Then
-                                    RaiseEvent handle_NAMES_command(_tmp_chan.GetName, player) ' Maybe we should rewrite this function >.<
+                                If socket.Nick <> player.Nick Then
+                                    RaiseEvent handle_NAMES_command(_tmp_chan.Chan_Name, player) ' Maybe we should rewrite this function >.<
                                 End If
                             Next
                         End If
 
                     Else
-                        Throw New InvalidDataException(rplcodes.ERR_NOSUCHNICK & " " & _tmp_chan.GetName & " :User is not on that Channel")
+                        Throw New InvalidDataException(rplcodes.ERR_NOSUCHNICK & " " & _tmp_chan.Chan_Name & " :User is not on that Channel")
                     End If
 
                 Else
@@ -853,7 +853,7 @@ Public Class WolServer
             End If
         Catch ex As InvalidDataException
             socket.Send(":" & network_adress & " " & ex.Message)
-            RaiseEvent ServerState("[PART]: " & socket.GetNick & ": -> " & ex.Message)
+            RaiseEvent ServerState("[PART]: " & socket.Nick & ": -> " & ex.Message)
         End Try
     End Sub
 
@@ -870,60 +870,54 @@ Public Class WolServer
                     Dim c As New Chatchannel
 
                     With c
-                        .SetName = chan
-                        .Owner = socket
-                        .SetKey = optpass
-                        .SetOwnerIPasLong = socket.GetIPasLong
-                        .SetIP = socket.Gethostname
-                        .SetGameID = type
-                        .SetListType = type
-                        .SetMinUsers = CInt(min_Plr)
-                        .SetMasUsers = CInt(maxPls)
-                        .SetTournament = istournament
-                        .Setreserved = unk1
-                        .SetGameEx = GameExtension
+                        .Chan_Name = chan
+                        .Chan_Owner = socket
+                        .Chan_Key = optpass
+                        .OwnerIPasLong = socket.IPasLong
+                        .Chan_IPAdress = socket.Hostname
+                        .Chan_Gameid = type
+                        .Chan_ListType = type
+                        .Chan_Min_Users = CInt(min_Plr)
+                        .Chan_Max_Users = CInt(maxPls)
+                        .Is_Tournament = istournament
+                        .Chan_Reserved = unk1
+                        .Chan_GameEx = GameExtension
                         .sockets.Add(socket)
-                        '.SetTopic = .GetName
                     End With
 
                     chanprovider.channels.Add(c)
 
                     If chanprovider.channels.Contains(c) Then
-                        Dim _line As String = c.Min_Users & " " & c.Max_Users & " " & c.GetGameid & " " & c.GetReserved & " " & c.GetOwner.GetSquadid & " " & c.GetOwner.GetIPasLong & " " & c.ISTournament & " :" & c.GetName
+                        Dim _line As String = c.Chan_Min_Users & " " & c.Chan_Max_Users & " " & c.Chan_Gameid & " " & c.Chan_Reserved & " " & c.Chan_Owner.Squadid & " " & c.Chan_Owner.IPasLong & " " & c.Is_Tournament & " :" & c.Chan_Name
 
-                        RaiseEvent ServerState("JOINGAME_DEBUG: " & _line)
                         ParamReply(socket, "JOINGAME", _line)
-                        putReply(socket, rplcodes.RPL_TOPIC, c.GetTopic)
+                        putReply(socket, rplcodes.RPL_TOPIC, c.Chan_Topic)
 
-                        If c.GetOwner.GetNick = socket.GetNick Then
-                            putPage(c.GetOwner, "*** Du bist nun der Gamehost ***")
+                        If c.Chan_Owner.Nick = socket.Nick Then
+                            putPage(c.Chan_Owner, "*** Du bist nun der Gamehost ***")
                         End If
 
                         For Each player As WolClient In c.sockets
-                            SendGamechannames(c, c.LIstType, player)
+                            SendGamechannames(c, c.Chan_ListType, player)
                         Next
                     End If
                 Else
-
-
                     Dim _tmp_chan As Chatchannel = GetChatchannelbyName(chan)
 
                     If _tmp_chan IsNot Nothing Then
-                        If Not gethostbyuser(socket.Gethostname, _tmp_chan) Then
+                        If Not gethostbyuser(socket.Hostname, _tmp_chan) Then
 
                             If Not _tmp_chan.sockets.Contains(socket) Then
                                 _tmp_chan.sockets.Add(socket)
 
-                                ParamReply(socket, "JOINGAME", min_Plr & " " & maxPls & " " & type & " " & unk1 & " " & socket.GetSquadid & " " & socket.GetIPasLong & " " & istournament & " :" & chan)
-
-
+                                ParamReply(socket, "JOINGAME", min_Plr & " " & maxPls & " " & type & " " & unk1 & " " & socket.Squadid & " " & socket.IPasLong & " " & istournament & " :" & chan)
 
                                 For Each player As WolClient In _tmp_chan.sockets
-                                    SendGamechannames(_tmp_chan, _tmp_chan.LIstType, player)
+                                    SendGamechannames(_tmp_chan, _tmp_chan.Chan_ListType, player)
                                 Next
 
-                                If _tmp_chan.GetOwner.GetNick <> socket.GetNick Then
-                                    putPage(socket, "*** " & _tmp_chan.GetOwner.GetNick & " ist der Gamehost! ***")
+                                If _tmp_chan.Chan_Owner.Nick <> socket.Nick Then
+                                    putPage(socket, "*** " & _tmp_chan.Chan_Owner.Nick & " ist der Gamehost! ***")
                                 End If
 
                             Else
@@ -933,7 +927,7 @@ Public Class WolServer
                             putPage(socket, "Fehler beim beitreten des Spiels: Jeder Spieler muss eine EIGENE routbare Externe IP-Adresse benutzen =(!")
 
                             For Each player As WolClient In _tmp_chan.sockets
-                                putPage(player, socket.GetNick & " kann diesem spiel nicht beitreten, da bereits jemand in diesem Spiel die IP-Adresse von " & socket.GetNick & " benutzt!")
+                                putPage(player, socket.Nick & " kann diesem spiel nicht beitreten, da bereits jemand in diesem Spiel die IP-Adresse von " & socket.Nick & " benutzt!")
                             Next
                             Threading.Thread.Sleep(300)
                             RemoveClient(socket)
@@ -941,8 +935,6 @@ Public Class WolServer
                     Else
                         Throw New InvalidDataException(rplcodes.ERR_NOSUCHCHANNEL & " " & chan & " :No Such Channel")
                     End If
-
-
                 End If
             Catch ex As InvalidDataException
                 RaiseEvent Exception("[JOINGAME]: " & ex.Message)
@@ -958,7 +950,7 @@ Public Class WolServer
     Private Function gethostbyuser(host As String, channel As Chatchannel) As Boolean
         Dim _tmp As Boolean = False
         For Each user As WolClient In channel.sockets
-            If user.Gethostname = host Then
+            If user.Hostname = host Then
                 _tmp = True
             End If
             Exit For
@@ -987,9 +979,9 @@ Public Class WolServer
             For Each player As WolClient In Chan.sockets
 
                 For i As Integer = 0 To Chan.sockets.Count - 1
-                    putReply(player, rplcodes.RPL_NAMREPLY, player.GetNick, "* " & Chan.GetName & " :" & Chan.sockets.Item(i).GetNick & ",0," & Chan.sockets.Item(i).GetIPasLong)
+                    putReply(player, rplcodes.RPL_NAMREPLY, player.Nick, "* " & Chan.Chan_Name & " :" & Chan.sockets.Item(i).Nick & ",0," & Chan.sockets.Item(i).IPasLong)
                 Next
-                putReply(player, rplcodes.RPL_ENDOFNAMES, player.GetNick & " " & Chan.GetName & " :End of Names")
+                putReply(player, rplcodes.RPL_ENDOFNAMES, player.Nick & " " & Chan.Chan_Name & " :End of Names")
 
             Next
         End SyncLock
@@ -997,12 +989,12 @@ Public Class WolServer
 
     Private Sub WolServer_handle_serial_command(SERIAL As String, socket As WolClient) Handles Me.handle_serial_command
         If SERIAL.Length > 24 AndAlso SERIAL.Length < 26 Then
-            socket.SetSerial = SERIAL
-            socket.SetSerialReportstate = True
-            socket.SetTournamentAllowedState = True
+            socket.Serial = SERIAL
+            socket.Serial_Report = True
+            socket.TournamentAllowed_State = True
         Else
-            socket.SetSerialReportstate = False
-            socket.SetTournamentAllowedState = True
+            socket.Serial_Report = False
+            socket.TournamentAllowed_State = True
         End If
     End Sub
 
@@ -1015,10 +1007,10 @@ Public Class WolServer
 
             If CDbl(sku) = vercheck.GetAllowedVersionbySKU("WOL", "32512") Then
                 If CDbl(sku) = 32512 Or CDbl(sku) = 1000 Then
-                    putReply(socket, "379", socket.GetNick & " :none none none 1 " & sku & " NONREQ")
+                    putReply(socket, "379", socket.Nick & " :none none none 1 " & sku & " NONREQ")
 
                     If CDbl(sku) = 1000 Then
-                        socket.set_wolversion = "1"
+                        socket.wolversion = "1"
                     End If
                 End If
             End If
@@ -1026,14 +1018,14 @@ Public Class WolServer
             If _needpatch = True Then
                 Throw New NotImplementedException(rplcodes.RPL_UPDATE_EXIST & " :You must update before connecting!")
             Else
-                If socket.get_wolversion = "1" Then
+                If socket.wolversion = "1" Then
                     putReply(socket, rplcodes.RPL_UPDATE_NONEX, "")
                 Else
                     putReply(socket, rplcodes.RPL_UPDATE_NONEX, "")
                 End If
 
-                socket.SetCver2 = sku
-                socket.SetGameversion = CInt(version)
+                socket.Cver2 = sku
+                socket.GameVersion = version
             End If
 
         Catch ex As NotImplementedException
@@ -1046,8 +1038,8 @@ Public Class WolServer
     Private Sub WolServer_handle_TOPIC_command(channel As String, Topic As String, ByVal socket As WolClient) Handles Me.handle_TOPIC_command
         SyncLock lock
             For Each c As Chatchannel In chanprovider.channels
-                If c.GetName = channel Then
-                    c.SetTopic = Replace(Topic, channel, "")
+                If c.Chan_Name = channel Then
+                    c.Chan_Topic = Replace(Topic, channel, "")
                     putReply(socket, rplcodes.RPL_TOPIC, ":" & Topic)
                 End If
             Next
@@ -1105,7 +1097,7 @@ Public Class WolServer
                             send_Servers(socket)
                         End If
                     Else
-                        putReply(socket, rplcodes.RPL_UPDATE_FTP, "u :" & Get_patch_informations(socket.GetCver2, socket.GetGameVersion, CStr(new_patchversion)))
+                        putReply(socket, rplcodes.RPL_UPDATE_FTP, "u :" & Get_patch_informations(socket.Cver2, socket.GameVersion, CStr(new_patchversion)))
                     End If
                 Else
                     Throw New NotImplementedException("GameLogin for SKU " & sku & " with Password failed: -> Username: " & username & " ; Password: " & password & " ; Version: " & version)
@@ -1124,16 +1116,16 @@ Public Class WolServer
             Dim flag As String = " 128"
             Dim _locked As String = " LOCK"
             For Each chan As Chatchannel In chanprovider.channels
-                If chan.key <> "" Then
+                If chan.Chan_Key <> "" Then
                     flag = " 384" ' password needed
-                ElseIf chan.GetName.StartsWith("#Lob") Or chan.GetName.StartsWith("#Cha") Then
+                ElseIf chan.Chan_Name.StartsWith("#Lob") Or chan.Chan_Name.StartsWith("#Cha") Then
                     flag = " 388"
                 Else
                     flag = " 128" ' No Password needed...
                 End If
 
-                If chan.GetName.Contains("#Lob_" & chan.GetGameid) Or chan.GetName = "#Chat" Then
-                    putReply(socket, rplcodes.RPL_LIST, socket.GetNick & " " & chan.GetName & " " & chan.Min_Users & " " & CStr(chan.sockets.Count) & flag)
+                If chan.Chan_Name.Contains("#Lob_" & chan.Chan_Gameid) Or chan.Chan_Name = "#Chat" Then
+                    putReply(socket, rplcodes.RPL_LIST, socket.Nick & " " & chan.Chan_Name & " " & chan.Chan_Min_Users & " " & CStr(chan.sockets.Count) & flag)
                 End If
             Next
         End SyncLock
@@ -1146,19 +1138,19 @@ Public Class WolServer
             Dim _locked As String = " LOCK"
             Dim _line As String
             For Each chan As Chatchannel In chanprovider.channels
-                If chan.key <> "" Then
+                If chan.Chan_Key <> "" Then
                     flag = " 384" ' password needed
                 Else
                     flag = " 128" ' No Password needed...
                 End If
 
-                If chan.LIstType = GameID Then
+                If chan.Chan_ListType = GameID Then
 
-                    _line = chan.GetName & " " & CStr(chan.sockets.Count) & " " & chan.Max_Users & " " & chan.LIstType & " " & chan.ISTournament & " " & chan.GetGameEx & " " & chan.GetOwnerIPaslong & flag & ":" & Trim(chan.GetTopic)
+                    _line = chan.Chan_Name & " " & CStr(chan.sockets.Count) & " " & chan.Chan_Max_Users & " " & chan.Chan_ListType & " " & chan.Is_Tournament & " " & chan.Chan_GameEx & " " & chan.OwnerIPasLong & flag & ":" & Trim(chan.Chan_Topic)
 
                     _line = Replace(_line, "  ", " ")
                     If _line <> "" Then
-                        putReply(socket, rplcodes.RPL_LISTGAME, socket.GetNick & " " & _line)
+                        putReply(socket, rplcodes.RPL_LISTGAME, socket.Nick & " " & _line)
                     End If
                 End If
             Next
@@ -1168,7 +1160,7 @@ Public Class WolServer
     Public Function GetChatchannelbyName(ByVal channel As String) As Chatchannel
         SyncLock lock
             For Each chan As Chatchannel In chanprovider.channels
-                If chan.GetName = channel Then
+                If chan.Chan_Name = channel Then
                     Return chan
                     Exit For
                 End If
@@ -1178,22 +1170,18 @@ Public Class WolServer
 
     Private Sub ReplyMessage(_from As WolClient, ByVal Message As String, ByVal skipsource As Boolean)
         SyncLock lock
-            If Message.StartsWith("/") Then
-                putPage(_from, "Ja?! xD")
-            Else
-                If skipsource = True Then
-                    For Each client As WolClient In ConnectedClients
+            If skipsource = True Then
+                For Each client As WolClient In ConnectedClients
 
-                        If client.GetNick <> _from.GetNick Then
-                            client.Send(":" & _from.hostmask & " privmsg " & Message)
-                        End If
-                    Next
-
-                Else
-                    For Each client As WolClient In ConnectedClients
+                    If client.Nick <> _from.Nick Then
                         client.Send(":" & _from.hostmask & " privmsg " & Message)
-                    Next
-                End If
+                    End If
+                Next
+
+            Else
+                For Each client As WolClient In ConnectedClients
+                    client.Send(":" & _from.hostmask & " privmsg " & Message)
+                Next
             End If
         End SyncLock
     End Sub
@@ -1212,7 +1200,7 @@ Public Class WolServer
     Private Function GetClientbyUSername(ByVal usernmae As String) As WolClient
         SyncLock lock
             For Each client As WolClient In ConnectedClients
-                If client.GetNick = usernmae Then
+                If client.Nick = usernmae Then
                     Return client
                     Exit For
                 End If
@@ -1232,9 +1220,9 @@ Public Class WolServer
 
             For Each player As WolClient In _chan.sockets
                 If message.Length < 1 Then
-                    message = player.GetNick & " " & player.Gethostname & " "
+                    message = player.Nick & " " & player.Hostname & " "
                 Else
-                    message = message & player.GetNick & " " & player.Gethostname & " "
+                    message = message & player.Nick & " " & player.Hostname & " "
                 End If
 
             Next
@@ -1242,7 +1230,7 @@ Public Class WolServer
             message = message & ":" & Gamenumber & " " & GetunixTimeStamp()
 
             For Each player As WolClient In GetGamehostChannel(socket).sockets
-                player.Send(":" & socket.hostmask & " STARTG " & _chan.GetOwner.GetNick & " :" & message)
+                player.Send(":" & socket.hostmask & " STARTG " & _chan.Chan_Owner.Nick & " :" & message)
             Next
         End SyncLock
     End Sub
@@ -1315,7 +1303,7 @@ Public Class WolServer
                 Servers.Add(c)
             Next
         Else
-            RaiseEvent Exception("Cant find " & My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
+            RaiseEvent Exception("Cant find File : " & My.Application.Info.DirectoryPath & "\conf\WOL_Serverlist.ini")
         End If
     End Sub
 
@@ -1331,6 +1319,8 @@ Public Class WolServer
             Else
                 Return "1"
             End If
+        Else
+            Return "1"
         End If
     End Function
 

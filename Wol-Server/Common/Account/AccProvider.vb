@@ -43,7 +43,7 @@ Public Class AccProvider
 
         If Username <> "" AndAlso Password <> "" Then
             Dim a As New Account
-            a.Add(Username, Password, socket.Gethostname, "1", "No")
+            a.Add(Username, Password, socket.Hostname, "1", "No")
             xml_func.SaveXML(a, My.Application.Info.DirectoryPath & "\Users\wol_" & Username & ".xml")
             Return 0
         Else

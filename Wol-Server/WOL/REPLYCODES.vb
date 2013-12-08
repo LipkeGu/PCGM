@@ -1,6 +1,6 @@
 ﻿Public Class REPLYCODES
 
-#Region "SERVERSERV-REPLYCODES"
+#Region "REPLYCODES"
     Public RPL_UPDATE_NONEX As String = "602"
     Public RPL_UPDATE_EXIST As String = "603"
     Public RPL_WOLSERV As String = "605"

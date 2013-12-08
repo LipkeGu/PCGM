@@ -16,15 +16,15 @@
                     If _line <> "" Then
                         Dim c As New Chatchannel
                         With c
-                            .SetName = _line
-                            .SetKey = ""
-                            .SetListType = "0"
-                            .SetMasUsers = 30
-                            .SetMinUsers = 0
-                            .SetGameID = CStr(group)
-                            .SetTournament = "0"
-                            .Setreserved = ""
-                            .SetGameEx = ""
+                            .Chan_Name = _line
+                            .Chan_Key = ""
+                            .Chan_ListType = "0"
+                            .Chan_Max_Users = 30
+                            .Chan_Min_Users = 0
+                            .Chan_Gameid = CStr(group)
+                            .Is_Tournament = "0"
+                            .Chan_Reserved = ""
+                            .Chan_GameEx = ""
                         End With
                         If Not channels.Contains(c) Then
                             channels.Add(c)

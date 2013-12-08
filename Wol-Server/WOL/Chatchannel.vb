@@ -49,178 +49,141 @@
     '  31 = Emperor: Battle for Dune, 
     '  33 = Red Alert 2,
     '  37 = Nox Quest channels, 
-    '  38, = Quickgame channels
-    '  39, = Quickgame channels
+    '  38 = Quickgame channels
+    '  39 = Quickgame channels
     '  40 = Quickgame channels, 
     '  41 = Yuri's Revenge
 
-    Public ReadOnly Property GetOwnerIPaslong As String
+    Public Property OwnerIPasLong As String
         Get
             Return _ipaslong
         End Get
-    End Property
 
-    Public ReadOnly Property GetOwner As WolClient
-        Get
-            Return _owner
-        End Get
-    End Property
-
-    Public WriteOnly Property SetOwnerIPasLong As String
         Set(value As String)
             _ipaslong = value
         End Set
     End Property
 
-    Public WriteOnly Property SetListType As String
+    Public Property Chan_Topic As String
         Set(value As String)
-            _listtype = CInt(value)
+            _topic = value
         End Set
-    End Property
-
-    Public WriteOnly Property SetKey As String
-        Set(value As String)
-            _key = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetTopic As String
         Get
             Return _topic
         End Get
     End Property
 
-    Public WriteOnly Property SetIP As String
-        Set(value As String)
-            _ipaddr = value
-        End Set
-    End Property
-
-    Public WriteOnly Property SetTopic As String
-        Set(value As String)
-            _topic = value
-        End Set
-    End Property
-
-    Public WriteOnly Property SetGameEx As String
+    Public Property Chan_GameEx As String
         Set(value As String)
             _extension = value
         End Set
-    End Property
-
-    Public ReadOnly Property GetGameEx As String
         Get
             Return _extension
         End Get
     End Property
 
-    Public ReadOnly Property GetName As String
-        Get
-            Return _name
-        End Get
-    End Property
-
-    Public ReadOnly Property LIstType As String
+    Public Property Chan_ListType As String
         Get
             Return CStr(_listtype)
         End Get
+        Set(value As String)
+            _listtype = CInt(value)
+        End Set
     End Property
 
-    Public ReadOnly Property GetGameid As String
+    Public Property Chan_Gameid As String
         Get
             Return CStr(_gameid)
         End Get
-    End Property
-
-    Public WriteOnly Property SetGameID As String
         Set(value As String)
             _gameid = value
         End Set
     End Property
 
-    Public ReadOnly Property Min_Users As String
-        Get
-            Return CStr(_minUsers)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetTournament As String
+    Public Property Is_Tournament As String
         Set(value As String)
             _tournament = value
         End Set
-    End Property
-
-    Public WriteOnly Property SetMinUsers As Integer
-        Set(value As Integer)
-            _minUsers = value
-        End Set
-    End Property
-
-    Public WriteOnly Property SetMasUsers As Integer
-        Set(value As Integer)
-            _maxUsers = value
-        End Set
-    End Property
-
-    Public WriteOnly Property Owner As WolClient
-        Set(value As WolClient)
-            _owner = value
-        End Set
-    End Property
-
-    Public ReadOnly Property Max_Users As String
         Get
-            Return CStr(_maxUsers)
+            Return _tournament
         End Get
     End Property
 
-    Public ReadOnly Property GetFlags As String
+    Public Property Chan_Min_Users As Integer
+        Set(value As Integer)
+            _minUsers = value
+        End Set
+        Get
+            Return CInt(_minUsers)
+        End Get
+
+    End Property
+
+    Public Property Chan_Max_Users As Integer
+        Set(value As Integer)
+            _maxUsers = value
+        End Set
+        Get
+            Return _maxUsers
+        End Get
+    End Property
+
+    Public Property Chan_Owner As WolClient
+        Set(value As WolClient)
+            _owner = value
+        End Set
+        Get
+            Return _owner
+        End Get
+    End Property
+
+    Public ReadOnly Property Chan_Flags As String
         Get
             Return CStr(_flags)
         End Get
 
     End Property
 
-    Public WriteOnly Property SetName As String
+    Public Property Chan_Name As String
         Set(value As String)
             _name = value
         End Set
+        Get
+            Return _name
+        End Get
     End Property
 
-    Public ReadOnly Property key As String
+    Public Property Chan_Key As String
         Get
             Return _key
         End Get
+        Set(value As String)
+            _key = value
+        End Set
     End Property
 
-    Public ReadOnly Property ISTournament As String
-        Get
-            Return _tournament
-        End Get
-    End Property
-
-    Public ReadOnly Property num_Users As String
+    Public ReadOnly Property Chan_Cur_Users As String
         Get
             Return CStr(sockets.Count)
         End Get
     End Property
 
-    Public ReadOnly Property GetReserved As String
+    Public Property Chan_Reserved As String
         Get
             Return CStr(_reserved)
         End Get
-    End Property
-
-    Public WriteOnly Property Setreserved As String
         Set(value As String)
             _reserved = value
         End Set
     End Property
 
-    Public ReadOnly Property GetIP As String
+    Public Property Chan_IPAdress As String
         Get
             Return _ipaddr
         End Get
+        Set(value As String)
+            _ipaddr = value
+        End Set
     End Property
 
 

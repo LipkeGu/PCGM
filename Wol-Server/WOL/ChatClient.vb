@@ -8,12 +8,14 @@ Public Class WolClient
     Public Event ClientState(ByVal msg As String)
     Public Event ConnectionClosed(ByVal msg As String, ByVal e As WolClient)
     Public Event String_MessageReceived(Message As String, ByVal ref As WolClient)
+    Public Event GetException(ex As String)
+
     Public _tc As WolClient = Nothing
     Public _socket As TcpClient = Nothing
     Public _stream As NetworkStream = Nothing
     Public _remaddr As String
     Public _length As Integer
-    Public Event GetException(ex As String)
+
     Dim _tmpbuffer As New List(Of Byte)
 
 #Region "ClientInfos"
@@ -44,265 +46,190 @@ Public Class WolClient
     Private _squadid As Integer = 0
 
 
-    Public ReadOnly Property get_wolversion As String
+    Public Property wolversion As String
         Get
             Return _wolversion
         End Get
-    End Property
-
-    Public WriteOnly Property set_wolversion As String
         Set(value As String)
             _wolversion = value
         End Set
     End Property
 
-    Public ReadOnly Property GetTournamentAllowed_State As Boolean
+    Public Property TournamentAllowed_State As Boolean
         Get
             Return _allow_tournament
         End Get
-    End Property
-
-    Public WriteOnly Property SetTournamentAllowedState As Boolean
         Set(value As Boolean)
             _allow_tournament = value
         End Set
     End Property
 
-    Public ReadOnly Property hostmask As String
+    Public ReadOnly Property Hostmask As String
         Get
-            Return _nick & "!" & GetNick & "@" & Gethostname
+            Return _nick & "!" & Nick & "@" & Hostname
         End Get
     End Property
 
-    Public ReadOnly Property GetSerialReport As Boolean
+    Public Property Serial_Report As Boolean
         Get
             Return _reported_missing_serial
         End Get
-    End Property
-
-    Public WriteOnly Property SetSerialReportstate As Boolean
         Set(value As Boolean)
             _reported_missing_serial = value
         End Set
     End Property
 
-    Public ReadOnly Property GetSquadid As String
+    Public Property Squadid As String
         Get
             Return CStr(_squadid)
         End Get
+        Set(value As String)
+            _squadid = CInt(value)
+        End Set
+
     End Property
 
-    Public ReadOnly Property Iswolhost As Boolean
+    Public Property Is_wolhost As Boolean
         Get
             Return _iswolclient
         End Get
-    End Property
-
-    Public WriteOnly Property SetGameID As String
-        Set(value As String)
-            _gameid = CInt(value)
-        End Set
-    End Property
-
-    Public WriteOnly Property SetWoltyp As Boolean
         Set(value As Boolean)
             _iswolclient = value
         End Set
     End Property
 
-    Public WriteOnly Property SetSquadid As Integer
-        Set(value As Integer)
-            _squadid = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetCurrent_Channel As String
-        Get
-            Return _curchan
-        End Get
-    End Property
-
-    Public WriteOnly Property SetChannel As String
+    Public Property GameID As String
         Set(value As String)
-            _curchan = value
+            _gameid = CInt(value)
         End Set
-    End Property
-
-    Public ReadOnly Property GetNick As String
-        Get
-            Return CStr(_nick)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetNick As String
-        Set(value As String)
-            _nick = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetCver1 As String
-        Get
-            Return CStr(_cver1)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetCver1 As String
-        Set(value As String)
-            _cver1 = CInt(value)
-        End Set
-    End Property
-
-    Public WriteOnly Property SetCver2 As String
-        Set(value As String)
-            _cver2 = CInt(value)
-        End Set
-    End Property
-
-    Public ReadOnly Property GetCver2 As String
-        Get
-            Return CStr(_cver2)
-        End Get
-    End Property
-
-    Public ReadOnly Property Gethostname As String
-        Get
-            Return _hostname
-        End Get
-    End Property
-
-    Public WriteOnly Property SetHostname As String
-        Set(value As String)
-            _hostname = value
-        End Set
-    End Property
-
-    Public ReadOnly Property isRegistered As Boolean
-        Get
-            Return _registered
-        End Get
-    End Property
-
-    Public WriteOnly Property set_isregistered As Boolean
-        Set(value As Boolean)
-            _registered = value
-        End Set
-    End Property
-
-    Public ReadOnly Property Getsetopt1 As String
-        Get
-            Return CStr(_opt1)
-        End Get
-    End Property
-
-
-    Public WriteOnly Property SetSetopt1 As Integer
-        Set(value As Integer)
-            _opt1 = value
-        End Set
-    End Property
-
-    Public WriteOnly Property SetSetopt2 As Integer
-        Set(value As Integer)
-            _opt2 = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetSetopt2 As String
-        Get
-            Return CStr(_opt2)
-        End Get
-    End Property
-
-    Public ReadOnly Property codepage As String
-        Get
-            Return CStr(_codepage)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetCodePage As Integer
-        Set(value As Integer)
-            _codepage = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetCodepage As String
-        Get
-            Return CStr(_codepage)
-        End Get
-    End Property
-
-    Public ReadOnly Property Getlocale As String
-        Get
-            Return CStr(_locale)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetLocale As Integer
-        Set(value As Integer)
-            _locale = value
-        End Set
-    End Property
-
-    Public ReadOnly Property GetGameVersion As String
-        Get
-            Return CStr(_gamever)
-        End Get
-    End Property
-
-    Public WriteOnly Property SetGameversion As Integer
-        Set(value As Integer)
-            _gamever = value
-        End Set
-    End Property
-
-    Public ReadOnly Property password As String
-        Get
-            Return _apgar
-        End Get
-
-    End Property
-
-    Public ReadOnly Property gameid As String
         Get
             Return CStr(_gameid)
         End Get
     End Property
 
-    Public ReadOnly Property joined_channels As String
+    Public Property Current_Channel As String
         Get
             Return _curchan
         End Get
+        Set(value As String)
+            _curchan = value
+        End Set
     End Property
 
-    Public ReadOnly Property Getapgar As String
+    Public Property Nick As String
         Get
-            Return _apgar
+            Return CStr(_nick)
+        End Get
+        Set(value As String)
+            _nick = value
+        End Set
+    End Property
+
+    Public Property Cver1 As String
+        Get
+            Return CStr(_cver1)
+        End Get
+        Set(value As String)
+            _cver1 = CInt(value)
+        End Set
+    End Property
+
+    Public Property Cver2 As String
+        Set(value As String)
+            _cver2 = CInt(value)
+        End Set
+        Get
+            Return CStr(_cver2)
         End Get
     End Property
 
-    Public WriteOnly Property SetApgar As String
+    Public Property Hostname As String
+        Get
+            Return _hostname
+        End Get
+        Set(value As String)
+            _hostname = value
+        End Set
+    End Property
+
+    Public Property Registered As Boolean
+        Get
+            Return _registered
+        End Get
+        Set(value As Boolean)
+            _registered = value
+        End Set
+    End Property
+
+    Public Property opt1 As String
+        Get
+            Return CStr(_opt1)
+        End Get
+        Set(value As String)
+            _opt1 = CInt(value)
+        End Set
+    End Property
+
+    Public Property opt2 As Integer
+        Set(value As Integer)
+            _opt2 = value
+        End Set
+        Get
+            Return _opt2
+        End Get
+    End Property
+
+    Public Property codepage As String
+        Get
+            Return CStr(_codepage)
+        End Get
+        Set(value As String)
+            _codepage = CInt(value)
+        End Set
+    End Property
+
+    Public Property locale As String
+        Get
+            Return CStr(_locale)
+        End Get
+        Set(value As String)
+            _locale = CInt(value)
+        End Set
+    End Property
+
+    Public Property GameVersion As String
+        Get
+            Return CStr(_gamever)
+        End Get
+        Set(value As String)
+            _gamever = CInt(value)
+        End Set
+    End Property
+
+    Public Property password As String
+        Get
+            Return _apgar
+        End Get
         Set(value As String)
             _apgar = value
         End Set
     End Property
 
-
-    Public ReadOnly Property GetIPasLong As String
+    Public ReadOnly Property IPasLong As String
         Get
             Return CStr(_longip)
         End Get
     End Property
-    Public ReadOnly Property GetSerial As String
+
+    Public Property Serial As String
         Get
             Return _serial
         End Get
-    End Property
-
-    Public WriteOnly Property SetSerial As String
         Set(value As String)
             _serial = value
         End Set
     End Property
+
 #End Region
 
     Public Sub New(socket As TcpClient)
@@ -341,8 +268,8 @@ Public Class WolClient
                 RaiseEvent ConnectionClosed(_remaddr, _tc)
                 Exit Sub
             Else
-                If Gethostname Is Nothing Then
-                    SetHostname = GetHostadress(_socket.Client.RemoteEndPoint.ToString)
+                If Hostname Is Nothing Then
+                    Hostname = GetHostadress(_socket.Client.RemoteEndPoint.ToString)
                 End If
 
                 If _stream IsNot Nothing Then

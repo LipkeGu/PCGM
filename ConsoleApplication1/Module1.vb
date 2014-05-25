@@ -1,8 +1,10 @@
 ﻿Module main
     'Dim WithEvents servserv As New ClassLibrary1.ServerServer
-   
+
     Dim WithEvents WOL As New ClassLibrary1.wol_main
     Sub Main()
+
+
         WOL.INIT()
         Dim _tmp As String = ""
 
